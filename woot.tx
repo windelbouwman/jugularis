@@ -1,0 +1,9 @@
+
+Program: 'begin' statements*=Statement 'end';
+
+Statement: Say;
+
+Say: 'say' text=Text;
+
+Text: /'[^']*'/;
+
