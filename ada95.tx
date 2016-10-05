@@ -1,0 +1,43 @@
+
+
+// Ada syntax, taken from: http://www.cs.vu.nl/grammarware/ada/
+
+Pragma: Pragma Identifier;
+
+Statement: ;
+
+SimpleStatement: NullStatement | AssignmentStatement | ExitStatement |
+                 GotoStatement | ProcedureCallStatement | ReturnStatement |
+                 EntryCallStatement | RequeueStatement | DelayStatement |
+                 AbortStatement | RaiseStatement | CodeStatement;
+
+CompoundStatement: IfStatement | CaseStatement | LoopStatement |
+                   BlockStatement | AcceptStatement | SelectStatement;
+
+NullStatement: 'null' ';';
+
+Label: '<<' LabelStatementIdentifier '>>';
+
+AssignmentStatement: VariableName ':=' Expression ';';
+
+IfStatement: 'if' Condition 'then' SequenceOfStatements ('else' SequenceOfStatements)? 'end' 'if' ';';
+
+Condition: BooleanExpression;
+
+CaseStatement: 'case' Expression 'is' CaseStatementAlternative+ 'end' 'case' ';';
+
+CaseStatementAlternative: 'when' DiscreteChoiceList '=>' SequenceOfStatements;
+
+LoopStatement: (LoopStatementIdentifier ':')? IterationScheme? 'loop' SequenceOfStatements 'end' 'loop' LoopIdentifier? ';';
+
+IterationScheme: ('while' Condition) | ('for' LoopParameterSpecification);
+
+LoopParameterSpecification: DefiningIdentifier 'in';
+
+BlockStatement: ;
+
+ExitStatement: 'exit' LoopName? ('when' Condition)? ';';
+
+GotoStatement: 'goto' LabelName ';';
+
+

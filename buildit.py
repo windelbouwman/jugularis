@@ -1,12 +1,11 @@
 
 import struct
-import io
 from ppci import ir, api
 from textx.metamodel import metamodel_from_file
 
 
 def parse():
-    woot = metamodel_from_file('woot.tx')
+    woot = metamodel_from_file('say.tx')
     model = woot.model_from_file('test.say')
 
     module = ir.Module('main')

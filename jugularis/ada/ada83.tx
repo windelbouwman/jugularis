@@ -1,0 +1,81 @@
+
+
+// ada 83 grammar, taken from:
+// https://slebok.github.io/zoo/ada/ada83/ichbiah/extracted/index.html
+
+// More lexical stuff:
+identifier: /[A-Za-z](_?[A-Za-z0-9])*/;
+integer: //
+
+// The more parsing stuff:
+
+pragma: 'pragma' identifier ('(' argument (',' argument)* ')')? ';';
+argument: identifier | character_string | number;
+declaration: object_declaration | type_declaration | subtype_declaration | private_type_declaration | subprogram_declaration | module_declaration | entry_declaration | exception_declaration | renaming_declaration;
+object_declaration: identifier_list ':' 'constant'? type (':=' expression)? ';'
+identifier_list: identifier (',' identifier)*;
+type: type_definition type_mark constraint?;
+type_definition: enumeration_type_definition | integer_type_definition | real_type_definition | array_type_definition | record_type_definition | access_type_definition | derived_type_definition;
+type_mark: type_name | subtype_name;
+constraint: range_constraint | accuracy_constraint | index_constraint | discriminant_constraint;
+type_declaration: 'type' identifier ('is' type_definition)? ';';
+subtype_declaration: 'subtype' identifier 'is' type_mark constraint? ';';
+derived_type_definition: 'new' type_mark constraint?;
+range_constraint: 'range' range;
+range: simple_expression '..' simple_expression;
+enumeration_type_definition: '(' enumeration_literal (',' enumeration_literal)* ')';
+enumeration_literal: identifier | character_literal;
+integer_type_definition: range_constraint;
+real_type_definition: accuracy_constraint;
+accuracy_constraint: 'digits' simple_expression range_constraint? 'delta' simple_expression range_constraint?;
+array_type_definition: 'array' '(' index (',' index)* ')' 'of' type_mark constraint?;
+index: discrete_range | type_mark;
+discrete_range: (type_mark 'range')? range;
+index_constraint: '(' discrete_range (',' discrete_range)* ')';
+aggregate: '(' component_association (',' component_association)* ')';
+component_association: ('choice' ('|' choice)* '=>')? expression;
+choice: simple_expression | discrete_range | 'others';
+record_type_definition: 'record' component_list 'end' 'record';
+component_list: object_declaration* variant_part? | 'null' ';';
+variant_part: 'case' discriminant 'of' ('when' choice ('|' choice)* '=>' component_list)* 'end' 'case' ';';
+discriminant: constant_name '..' component_name;
+discriminant_constraint: aggregate;
+access_type_definition: 'access' type;
+name: identifier | indexed_component | selected_component | predefined_attribute;
+indexed_component: name '(' expression (',' expression)* ')';
+selected_component: name '.' identifier;
+predefined_attribute: name "'" identifier;
+literal: number | enumeration_literal | character_string | "null";
+variable: name ('(' discrete_range ')')? | name '.' 'all';
+expression: relation ('and' relation)* | relation ('or' relation)* | relation ('xor' relation)*;
+relation: simple_expression (relational_operator simple_expression)? | simple_expression 'not'? 'in' range | simple_expression 'not'? 'in' type_mark constraint?;
+simple_expression: unary_operator? term (adding_operator term)*;
+term: factor (multiplying_operator factor)*;
+factor: primary ("**" primary)?;
+primary: literal | aggregate | variable | allocator | subprogram_call | qualified_expression | '(' expression ')';
+logical_operator: 'and' | 'or' | 'xor';
+relational_operator: '=' | '/=' | '<' | '<=' | '>' | '>=';
+adding_operator: '+' | '-' | '&';
+unary_operator: '+' | '-' | 'not';
+multiplying_operator: '*' | '/' | 'mod';
+exponentiating_operator: '**';
+qualified_expression: type_mark '(' expression ')' | type_mark aggregate;
+allocator: 'new' qualified_expression;
+sequence_of_statements: statement*;
+statement: simple_statement | component_statement | '<<' identifier '>>' statement;
+simple_statement: assignment_statement | subprogram_call_statement | exit_statement | return_statement | goto_statement | assert_statement | initiate_statement | delay_statement | raise_statement | abort_statement | code_statement | 'null' ';';
+component_statement: if_statement | case_statement | loop_statement | accept_statement | select_statement | block;
+assignment_statement: variable ':=' expression;
+subprogram_call_statement: subprogram_call;
+subprogram_call: subprogram_name ('(' parameter_association (',' parameter_association)* ')')?;
+parameter_association: formal_parameter ':=' actual_parameter | formal_parameter '=:' actual_parameter | formal_parameter ':=:' actual_parameter;
+formal_parameter: identifier;
+actual_parameter: expression;
+return_statement: 'return' expression? ';';
+// if_statement: 'if' 'end' 'if';
+
+record_type_representation: 'for' type_name 'use' 'record' (alignment_clause ';')? (component_name location ';')* 'end' 'record' ';';
+location: 'at' static_expression 'range' range;
+alignment_clause: 'at' 'mod' static_expression;
+address_specification: 'for' name 'use' 'at' static_expression ';';
+code_statement: qualified_expression ';';
