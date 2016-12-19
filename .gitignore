@@ -1,3 +1,5 @@
 
 env
 *.oj
+__pycache__
+

@@ -3,16 +3,30 @@
 // ada 83 grammar, taken from:
 // https://slebok.github.io/zoo/ada/ada83/ichbiah/extracted/index.html
 
+// Another good resource:
+// http://archive.adaic.com/standards/83lrm/html/lrm-E.html
+
 // More lexical stuff:
 identifier: /[A-Za-z](_?[A-Za-z0-9])*/;
-integer: //
+number: integer_number;
+integer_number: integer;
+integer: /\d(_?\d)*/;
+character_string: '"' /([A-Za-z])*/ '"';
+
+// Are names identifiers??
+type_name: identifier;
+subtype_name: identifier;
+subprogram_name: identifier;
+constant_name: identifier;
+component_name: identifier;
+entry_name: identifier;
 
 // The more parsing stuff:
 
 pragma: 'pragma' identifier ('(' argument (',' argument)* ')')? ';';
 argument: identifier | character_string | number;
 declaration: object_declaration | type_declaration | subtype_declaration | private_type_declaration | subprogram_declaration | module_declaration | entry_declaration | exception_declaration | renaming_declaration;
-object_declaration: identifier_list ':' 'constant'? type (':=' expression)? ';'
+object_declaration: identifier_list ':' 'constant'? type (':=' expression)? ';';
 identifier_list: identifier (',' identifier)*;
 type: type_definition type_mark constraint?;
 type_definition: enumeration_type_definition | integer_type_definition | real_type_definition | array_type_definition | record_type_definition | access_type_definition | derived_type_definition;
@@ -24,7 +38,7 @@ derived_type_definition: 'new' type_mark constraint?;
 range_constraint: 'range' range;
 range: simple_expression '..' simple_expression;
 enumeration_type_definition: '(' enumeration_literal (',' enumeration_literal)* ')';
-enumeration_literal: identifier | character_literal;
+enumeration_literal: identifier | character_string;
 integer_type_definition: range_constraint;
 real_type_definition: accuracy_constraint;
 accuracy_constraint: 'digits' simple_expression range_constraint? 'delta' simple_expression range_constraint?;
@@ -72,8 +86,63 @@ parameter_association: formal_parameter ':=' actual_parameter | formal_parameter
 formal_parameter: identifier;
 actual_parameter: expression;
 return_statement: 'return' expression? ';';
-// if_statement: 'if' 'end' 'if';
-
+if_statement: 'if' condition 'then' sequence_of_statements ('elseif' condition 'then' sequence_of_statements)* ('else' sequence_of_statements)? 'end' 'if' ';';
+condition: expression ('and' 'then' expression)* | expression ('or' 'else' expression)*;
+case_statement: 'case' expression 'of' ('when' choice ('|' choice)* '=>' sequence_of_statements)* 'end' 'case' ';';
+loop_statement: iteration_specification? basic_loop;
+basic_loop: 'loop' sequence_of_statements 'end' 'loop' identifier? ';';
+iteration_specification: 'for' loop_parameter 'in' 'reverse'? discrete_range | 'while' condition;
+loop_parameter: identifier;
+exit_statement: 'exit' identifier? ('when' condition) ';';
+goto_statement: 'goto' identifier ';';
+assert_statement: 'assert' condition ';';
+declarative_part: use_clause? declaration* representation_specification* body*;
+body: visibility_restriction? unit_body | body_stub;
+unit_body: subprogram_body | module_specification | module_body;
+subprogram_declaration: subprogram_specification ';' | subprogram_nature designator 'is' generic_instantiation ';';
+subprogram_specification: generic_clause? subprogram_nature designator formal_part? ('return' type_mark constraint?)?;
+subprogram_nature: 'function' | 'procedure';
+designator: identifier | character_string;
+formal_part: '(' parameter_declaration (';' parameter_declaration)* ')';
+parameter_declaration: identifier_list ':' mode type_mark constraint? (':=' expression)?;
+mode: 'in'? | 'out' | 'in' 'out';
+subprogram_body: subprogram_specification 'is' declarative_part 'begin' sequence_of_statements ('exception' exception_handler*)? 'end' designator? ';';
+block: ('declare' declarative_part)? 'begin' sequence_of_statements ('exception' exception_handler*)? 'end' identifier? ';';
+module_declaration: visibility_restriction? module_declaration | module_nature identifier ('(' discrete_range ')')? 'is' generic_instantiation ';';
+module_specification: generic_clause? module_nature identifier_list ('(' discrete_range ')')? ('is' declarative_part ('private' declarative_part)? 'end' identifier)? ';';
+module_nature: 'package' | 'task';
+module_body: module_nature 'body' identifier 'is' declarative_part ('begin' sequence_of_statements)? ('exception' exception_handler*)? 'end' identifier? ';';
+private_type_declaration: 'restricted'? 'type' identifier 'is' 'private' ';';
+visibility_restriction: 'restricted' visibility_list?;
+visibility_list: '(' unit_name (',' unit_name)* ')';
+use_clause: 'use' module_name (',' module_name)* ';';
+renaming_declaration: identifier ':' type_mark 'renames' name ';' |
+                      identifier ':' 'exception' 'renames' name ';' |
+                      subprogram_nature designator 'renames' (name '.')? designator ';' |
+                      module_nature identifier 'renames' name ';';
+initiate_statement: 'initiate' task_designator (',' task_designator)* ';';
+task_designator: task_name ('(' discrete_range ')')?;
+entry_declaration: 'entry' identifier ('(' discrete_range ')')? formal_part? ';';
+accept_statement: 'accept' entry_name formal_part? ('do' sequence_of_statements 'end' identifier?)? ';';
+delay_statement: 'delay' simple_expression ';';
+select_statement: 'select' ('when' condition '=>')? select_alternative ('or' ('when' condition '=>')? select_alternative)* ('else' sequence_of_statements)? 'end' 'select' ';';
+select_alternative: accept_statement sequence_of_statements? | delay_statement sequence_of_statements?;
+abort_statement: 'abort' task_designator (',' task_designator)* ';';
+compilation: compilation_unit*;
+compilation_unit: visibility_restriction? 'separate'? unit_body;
+body_stub: subprogram_specification 'is' 'separate' ';' | module_nature 'body' identifier 'is' 'separate' ';';
+exception_declaration: identifier_list ':' 'exception' ';';
+exception_handler: 'when' exception_choice ('|' exception_choice)* '=>' sequence_of_statements;
+exception_choice: exception_name | 'others';
+raise_statement: 'raise' exception_name? ';';
+generic_clause: 'generic' ('(' generic_parameter (';' generic_parameter)* ')')?;
+generic_parameter: parameter_declaration | subprogram_specification ('is' (name '.')? designator)? | 'restricted'? 'type' identifier;
+generic_instantiation: 'new' name ('(' generic_association (',' generic_association)* ')')?;
+generic_association: parameter_association | (formal_parameter 'is')? (name '.')? designator | (formal_parameter 'is')? type_mark;
+representation_specification: packing_specification | length_specification | record_type_representation | address_specification | enumeration_type_representation;
+packing_specification: 'for' type_name 'use' 'packing' ';';
+length_specification: 'for' name 'use' static_expression ';';
+enumeration_type_representation: 'for' type_name 'use' aggregate ';';
 record_type_representation: 'for' type_name 'use' 'record' (alignment_clause ';')? (component_name location ';')* 'end' 'record' ';';
 location: 'at' static_expression 'range' range;
 alignment_clause: 'at' 'mod' static_expression;

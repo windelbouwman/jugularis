@@ -1,0 +1,5 @@
+
+GlobalName: '@' (STRING | INT | ID);
+LocalName: '%' (STRING | INT | ID);
+
+Comment: /;.*$/;

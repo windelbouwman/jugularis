@@ -1,2 +1,4 @@
 textx
 ppci
+pycparser
+ply

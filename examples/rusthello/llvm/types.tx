@@ -1,0 +1,21 @@
+
+import common
+
+// Type grammars
+
+Type: (BaseType | ComplexType | LocalName) stars*='*' suffixes*=FunctionSuffix;
+FunctionSuffix: '(' parameters*=ParameterType[','] ')' stars*='*';
+
+ParameterType: Type;
+// PointerType: type=Type '*';
+
+ComplexType: StructType | ArrayType | VectorType;
+StructType: '{' types*=Type[','] '}';
+ArrayType: '[' INT 'x' Type ']';
+VectorType: '<' INT 'x' Type '>';
+
+BaseType: IntType | FloatType | VoidType;
+
+IntType: 'i' INT;
+FloatType: 'half' | 'float' | 'double' | 'fp128' | 'x86_fp80';
+VoidType: 'void';

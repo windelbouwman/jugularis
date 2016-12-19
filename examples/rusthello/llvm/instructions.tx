@@ -1,0 +1,8 @@
+
+import types
+
+// Instruction grammars
+
+Instruction: StoreInstruction;
+
+StoreInstruction: 'store';

@@ -1,0 +1,55 @@
+
+// llvm ir syntax textX spec
+// See: http://llvm.org/docs/LangRef.html
+
+import llvm.common
+import llvm.types
+import llvm.instructions
+
+Module: elements*=TopLevelElement;
+
+TopLevelElement: TargetInfo | TypeDef | GlobalValue;
+
+TargetInfo: 'target' ('triple' | 'datalayout') '=' STRING;
+
+TypeDef: name=LocalName '=' 'type' type=Type;
+
+GlobalValue: GlobalVariable | Function;
+GlobalVariable:
+    name=GlobalName '='
+    linkage=Linkage?
+    ('constant' | 'global')
+    type=Type
+    (initial=Constant)?
+    (',' section=Section)
+    (',' Align)?;
+
+Constant: StructureConstant;
+
+ValueRef: LocalName;
+TypedValue: type=Type value=ValueRef;
+Expr: GetElementPtr;
+
+GetElementPtr:
+    'getelementptr' 'inbounds'? '('
+    base=TypedValue
+    (',' TypedValue)*
+    ')';
+
+StructureConstant: '{' list*=TypedConstant[','] '}';
+TypedConstant: type=Type value=Constant;
+
+Function: FunctionDefine | FunctionDeclare;
+FunctionDefine: 'define' header=FunctionHeader '{' blocks+=BasicBlock '}';
+FunctionDeclare: 'declare' header=FunctionHeader;
+
+FunctionHeader:
+    '(' ')';
+
+BasicBlock: name=STRING ':' instructions+=Instruction;
+
+Section: 'section' STRING;
+Align: 'align' INT;
+
+Linkage: 'private' | 'weak' | 'dllimport';
+
